@@ -15,7 +15,7 @@ class SessionClock extends React.Component {
       break: 5,
       session: 25,
       play: false,
-      timeLeft: 10,
+      timeLeft: 1500,
       type: "Session",
     };
     this.setReset = this.setReset.bind(this);
