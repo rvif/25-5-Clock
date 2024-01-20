@@ -19,8 +19,8 @@ This is a simple React application that implements a 25+5 clock, also known as t
 1. **Clone the repository:**
 
    ```
-   git clone https://github.com/your-username/react-25-5-clock.git
-   cd react-25-5-clock
+   git clone https://github.com/rvif/25-5-Clock.git
+   cd 25-5-Clock
    ```
 
 2. **Install dependencies:**
