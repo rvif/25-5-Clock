@@ -11,7 +11,6 @@ class SessionClock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      reset: false,
       break: 5,
       session: 25,
       play: false,
@@ -36,13 +35,8 @@ class SessionClock extends React.Component {
       break: 5,
       session: 25,
       timeLeft: 1500,
-      reset: !prevState.reset,
+      type: "Session",
     }));
-    if (this.state.reset) {
-      this.setState({
-        timeLeft: 1500,
-      });
-    }
   }
 
   timeFormatter() {
@@ -63,7 +57,10 @@ class SessionClock extends React.Component {
       if (this.state.break > 1 && this.state.break <= 60) {
         this.setState((prevState) => ({
           break: prevState.break - 1,
-          timeLeft: this.setTimeLeft(this.state.break * 60 - 60),
+          timeLeft:
+            this.state.type === "Break"
+              ? this.setTimeLeft(this.state.break * 60 - 60)
+              : prevState.timeLeft,
         }));
       }
   }
@@ -72,7 +69,10 @@ class SessionClock extends React.Component {
       if (this.state.break >= 0 && this.state.break < 60) {
         this.setState((prevState) => ({
           break: prevState.break + 1,
-          timeLeft: this.setTimeLeft(this.state.break * 60 + 60),
+          timeLeft:
+            this.state.type === "Break"
+              ? this.setTimeLeft(this.state.break * 60 + 60)
+              : prevState.timeLeft,
         }));
       }
   }
@@ -81,7 +81,10 @@ class SessionClock extends React.Component {
       if (this.state.session > 1 && this.state.session <= 60) {
         this.setState((prevState) => ({
           session: prevState.session - 1,
-          timeLeft: this.setTimeLeft(this.state.session * 60 - 60),
+          timeLeft:
+            this.state.type === "Session"
+              ? this.setTimeLeft(this.state.session * 60 - 60)
+              : prevState.timeLeft,
         }));
       }
   }
@@ -91,50 +94,63 @@ class SessionClock extends React.Component {
       if (this.state.session >= 0 && this.state.session < 60) {
         this.setState((prevState) => ({
           session: prevState.session + 1,
-          timeLeft: this.setTimeLeft(this.state.session * 60 + 60),
+          timeLeft:
+            this.state.type === "Session"
+              ? this.setTimeLeft(this.state.session * 60 + 60)
+              : prevState.timeLeft,
         }));
       }
   }
 
   timeout() {
     setTimeout(() => {
-      if (this.state.timeLeft && this.state.play) {
-        this.setTimeLeft(this.state.timeLeft - 1);
+      if (this.state.timeLeft > 0 && this.state.play) {
+        this.setState((prevState) => ({
+          timeLeft: prevState.timeLeft - 1,
+        }));
+        // console.log(this.state.timeLeft);
+      } else if (this.state.timeLeft === 0 && this.state.play) {
+        this.resetTimer();
       }
     }, 1000);
   }
+
   resetTimer() {
     const audio = document.getElementById("beep");
-    if (!this.state.timeLeft && this.state.type === "Session") {
-      this.setTimeLeft(this.state.break * 60);
-      this.setState({
-        type: "Break",
-      });
-      audio.play();
-      this.setState({ play: false }, () => {
-        setTimeout(() => {
-          this.setState({ play: true });
-        }, 1000);
-      });
-    }
-    if (!this.state.timeLeft && this.state.type === "Break") {
-      this.setTimeLeft(this.state.session * 60);
-      this.setState({
-        type: "Session",
-      });
-      audio.pause();
-      audio.currentTime = 0;
-      this.setState({ play: false }, () => {
-        setTimeout(() => {
-          this.setState({ play: true });
-        }, 1000);
-      });
+    if (this.state.type === "Session") {
+      this.setState(
+        {
+          type: "Break",
+          timeLeft: this.state.break * 60,
+          play: false,
+        },
+        () => {
+          audio.play();
+          setTimeout(() => {
+            this.setState({ play: true });
+          }, 1000);
+        }
+      );
+    } else {
+      this.setState(
+        {
+          type: "Session",
+          timeLeft: this.state.session * 60,
+          play: false,
+        },
+        () => {
+          audio.play();
+          setTimeout(() => {
+            this.setState({ play: true });
+          }, 1000);
+        }
+      );
     }
   }
+
   clock = () => {
     if (this.state.play) {
       this.timeout();
-      this.resetTimer();
     } else {
       clearTimeout(this.timeout);
     }
@@ -179,7 +195,7 @@ class SessionClock extends React.Component {
               </button>
 
               <div className="0-60 sm:w-12 w-10 h-full mr-2 ml-2 flex items-center justify-center">
-                <p id="break-length">{this.state.break}</p>
+                <h1 id="break-length">{this.state.break}</h1>
               </div>
               <button
                 id="break-increment"
@@ -192,7 +208,7 @@ class SessionClock extends React.Component {
           </div>
           <div
             id="session-label"
-            className="session-length sm:w-60 w-56 h-full font-orbitron flex flex-col items-center sm:text-[26px] text-[20px]"
+            className="sm:w-60 w-56 h-full font-orbitron flex flex-col items-center sm:text-[26px] text-[20px]"
           >
             <h1>Session Length</h1>
             <div className="session-control flex items-center justify-center w-full h-full">
@@ -203,11 +219,8 @@ class SessionClock extends React.Component {
               >
                 <FontAwesomeIcon icon={faArrowDown} />
               </button>
-              <div
-                id="session-length"
-                className="0-60 sm:w-12 w-10 h-full mr-2 ml-2 flex items-center justify-center"
-              >
-                {this.state.session}
+              <div className="0-60 sm:w-12 w-10 h-full mr-2 ml-2 flex items-center justify-center">
+                <h1 id="session-length">{this.state.session}</h1>
               </div>
               <button
                 id="session-increment"
